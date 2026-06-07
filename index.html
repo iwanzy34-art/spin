@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Spin Undian</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,248,225,0.95);
+      border-radius: 72px;
+      padding: 20px 24px 32px;
+      box-shadow: 0 25px 45px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.6);
+      text-align: center;
+      max-width: 700px;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #c79a2e, #f5c542);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    .sub {
+      color: #5a3e1b;
+      font-weight: 500;
+      margin-bottom: 20px;
+      border-bottom: 1px dashed #d4b87a;
+      display: inline-block;
+      padding-bottom: 5px;
+    }
+    .wheel-container {
+      position: relative;
+      margin: 0 auto;
+      width: min(85vw, 85vh, 480px);
+      height: min(85vw, 85vh, 480px);
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50%;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 0 8px #f9e0a0, 0 0 0 12px #b87c2e;
+      transition: box-shadow 0.2s;
+    }
+    .pointer {
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 24px solid transparent;
+      border-right: 24px solid transparent;
+      border-top: 52px solid #ffd966;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+      z-index: 10;
+    }
+    .pointer::after {
+      content: "⬤";
+      position: absolute;
+      top: -58px;
+      left: -12px;
+      font-size: 28px;
+      color: #c2410c;
+      text-shadow: 0 2px 3px black;
+    }
+    .btn-spin {
+      margin-top: 32px;
+      background: radial-gradient(circle at 30% 10%, #f3b33d, #e07c1f);
+      border: none;
+      padding: 14px 35px;
+      font-size: 1.7rem;
+      font-weight: bold;
+      color: #2c1a0a;
+      border-radius: 60px;
+      cursor: pointer;
+      box-shadow: 0 8px 0 0 #8b4b1a;
+      transition: 0.07s linear;
+      font-family: inherit;
+      letter-spacing: 2px;
+    }
+    .btn-spin:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 0 0 #8b4b1a;
+    }
+    .btn-spin:disabled {
+      opacity: 0.6;
+      transform: translateY(0);
+      cursor: not-allowed;
+    }
+    .result-box {
+      margin-top: 28px;
+      background: #2d2218;
+      padding: 12px 20px;
+      border-radius: 50px;
+      color: #ffecb3;
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: inline-block;
+      min-width: 200px;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5), 0 2px 4px rgba(255,215,130,0.3);
+    }
+    .prize-name {
+      color: #ffd966;
+      font-size: 1.7rem;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .loading {
+      font-size: 1rem;
+      color: #a0793a;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 0.7rem;
+      color: #956e34;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; transform: scale(0.98);}
+      100% { opacity: 1; transform: scale(1);}
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🎡 SPIN UNDIAN</h1>
+  <div class="sub">✨ klik roda & menangkan hadiah ✨</div>
+
+  <div class="wheel-container">
+    <canvas id="wheelCanvas" width="600" height="600"></canvas>
+    <div class="pointer"></div>
+  </div>
+
+  <button class="btn-spin" id="spinBtn">🔁 SPIN</button>
+  <div class="result-box" id="resultBox">
+    🎲 <span id="resultText">Siap spin?</span>
+  </div>
+  <footer>📋 Setting hadiah & bobot di Google Sheet (tanpa ubah kode)</footer>
+</div>
+
+<script>
+  (function(){
+    // ------------------- GLOBAL -------------------
+    let prizes = [];            // [{ name, weight, startAngle, endAngle }]
+    let totalWeight = 0;
+    let currentRotation = 0;   // sudut rotasi roda (radian)
+    let animating = false;
+    let animationId = null;
+    let canvas = document.getElementById('wheelCanvas');
+    let ctx = canvas.getContext('2d');
+    let spinBtn = document.getElementById('spinBtn');
+    let resultSpan = document.getElementById('resultText');
+
+    // Ukuran canvas agar tajam
+    function resizeCanvas() {
+      const container = document.querySelector('.wheel-container');
+      const size = container.clientWidth;
+      canvas.width = size;
+      canvas.height = size;
+      drawWheel();
+    }
+    window.addEventListener('resize', () => { resizeCanvas(); });
+    
+    // Warna-warni cerah untuk segmen
+    const colorPalette = [
+      '#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9F4A', '#C77DFF', '#6C91B2',
+      '#F4A261', '#E9C46A', '#2A9D8F', '#E76F51', '#D4A5A5', '#9C89B8',
+      '#70AE6E', '#F6AE9A', '#B56576', '#6D597A'
+    ];
+    
+    // hitung sudut berdasarkan bobot & gambar roda
+    function buildSegments(settings) {
+      if(!settings || settings.length === 0) return [];
+      let segs = [];
+      let currentStart = 0;
+      for(let i=0; i<settings.length; i++) {
+        let weight = settings[i].weight;
+        let angleSize = (weight / totalWeight) * 2 * Math.PI;
+        let end = currentStart + angleSize;
+        segs.push({
+          name: settings[i].name,
+          weight: weight,
+          startAngle: currentStart,
+          endAngle: end,
+          color: colorPalette[i % colorPalette.length]
+        });
+        currentStart = end;
+      }
+      return segs;
+    }
+    
+    // Menggambar roda dengan rotasi tertentu
+    function drawWheel() {
+      if(!ctx || prizes.length === 0) {
+        // tampilkan pesan "loading"
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = "bold 16px 'Segoe UI'";
+        ctx.fillStyle = "#3e2a1f";
+        ctx.fillText("Muat konfigurasi...", canvas.width/2-80, canvas.height/2);
+        return;
+      }
+      
+      const w = canvas.width;
+      const h = canvas.height;
+      const centerX = w/2;
+      const centerY = h/2;
+      const radius = w/2 * 0.92;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      for(let i=0; i<prizes.length; i++) {
+        const seg = prizes[i];
+        let start = seg.startAngle + currentRotation;
+        let end = seg.endAngle + currentRotation;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // gambar teks di tengah segmen
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(start + (seg.endAngle - seg.startAngle)/2 + currentRotation);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        let textRadius = radius * 0.7;
+        let text = seg.name.length > 14 ? seg.name.slice(0,12)+".." : seg.name;
+        ctx.font = `bold ${Math.max(12, Math.min(18, radius/12))}px "Segoe UI"`;
+        ctx.fillStyle = "#1e2a1a";
+        ctx.shadowColor = "rgba(255,255,200,0.6)";
+        ctx.fillText(text, textRadius, 6);
+        ctx.restore();
+      }
+      
+      // Gambar lingkaran pusat
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 0.12, 0, 2*Math.PI);
+      ctx.fillStyle = "#F9C74F";
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 0.07, 0, 2*Math.PI);
+      ctx.fillStyle = "#F9844A";
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    
+    // Mendapatkan index hadiah berdasarkan sudut pointer (fixed di atas = -PI/2)
+    function getPrizeIndexFromRotation(rotationRad) {
+      if(prizes.length === 0) return -1;
+      // Pointer terletak di sudut -PI/2 (atas)
+      const pointerAngle = -Math.PI / 2;
+      // Sudut absolut suatu titik pada roda relatif terhadap pusat = (pointerAngle - rotationRad) modulo 2PI
+      let rawAngle = pointerAngle - rotationRad;
+      rawAngle = ((rawAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+      
+      for(let i=0; i<prizes.length; i++) {
+        if(rawAngle >= prizes[i].startAngle && rawAngle < prizes[i].endAngle) {
+          return i;
+        }
+      }
+      return 0; // fallback
+    }
+    
+    // Animasi spin (targetIndex dari server)
+    function animateSpinToIndex(targetIndex, finalCallback) {
+      if(animating) return;
+      animating = true;
+      spinBtn.disabled = true;
+      
+      // Tentukan rotasi akhir agar segmen targetIndex tepat di pointer
+      // Pointer angle = -PI/2, kita ingin tengah segmen target menyentuh pointer
+      const targetSeg = prizes[targetIndex];
+      const midTargetAngle = targetSeg.startAngle + (targetSeg.endAngle - targetSeg.startAngle)/2;
+      // Rotasi diperlukan: (pointerAngle - midTargetAngle) mod 2PI
+      let targetRotation = (-Math.PI/2) - midTargetAngle;
+      targetRotation = ((targetRotation % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+      
+      // Tambahkan putaran tambahan (5-8 putaran penuh)
+      const extraSpins = 6 * 2 * Math.PI;  // 6 putaran
+      let delta = targetRotation - currentRotation;
+      // sesuaikan arah putaran (biasanya putar searah jarum jam => delta positif)
+      // agar selalu positif dan ditambah extraSpins
+      let finalRotation = currentRotation + extraSpins + ((delta + 2*Math.PI) % (2*Math.PI));
+      
+      const duration = 1800; // ms
+      const startTime = performance.now();
+      const startRotation = currentRotation;
+      
+      function step(now) {
+        const elapsed = now - startTime;
+        let t = Math.min(1, elapsed / duration);
+        // easeOutCubic
+        const ease = 1 - Math.pow(1-t, 3);
+        const newRotation = startRotation + (finalRotation - startRotation) * ease;
+        currentRotation = newRotation % (2*Math.PI);
+        drawWheel();
+        
+        if(t < 1) {
+          animationId = requestAnimationFrame(step);
+        } else {
+          // pastikan berhenti tepat di targetRotation modulo
+          currentRotation = targetRotation;
+          drawWheel();
+          animating = false;
+          spinBtn.disabled = false;
+          if(finalCallback) finalCallback();
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+      }
+      if(animationId) cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(step);
+    }
+    
+    // Proses spin : panggil server, dapatkan hadiah, lalu animasi
+    function spinWheel() {
+      if(animating) {
+        resultSpan.innerText = "Tunggu spin selesai...";
+        return;
+      }
+      if(!prizes.length) {
+        resultSpan.innerText = "❌ Belum ada hadiah, cek sheet!";
+        return;
+      }
+      
+      resultSpan.innerText = "🎲 Memutar...";
+      spinBtn.disabled = true;
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          // response = { prize: "Nama Hadiah", index: number }
+          if(!response || response.index === undefined) {
+            resultSpan.innerText = "⚠️ Gagal spin, coba lagi.";
+            spinBtn.disabled = false;
+            return;
+          }
+          const targetIdx = response.index;
+          if(targetIdx >= prizes.length) {
+            resultSpan.innerText = "⚠️ Error indeks hadiah.";
+            spinBtn.disabled = false;
+            return;
+          }
+          
+          // mulai animasi ke indeks target
+          animateSpinToIndex(targetIdx, function() {
+            // setelah animasi selesai, tampilkan hadiah
+            const wonPrize = prizes[targetIdx].name;
+            resultSpan.innerHTML = `🏆 ${wonPrize} 🏆`;
+            // optional: vibrate haptic (jika support)
+            if(navigator.vibrate) navigator.vibrate(200);
+          });
+        })
+        .withFailureHandler(function(error) {
+          console.error(error);
+          resultSpan.innerText = "❌ Gagal konek ke server. Periksa koneksi.";
+          spinBtn.disabled = false;
+        })
+        .performSpin(); // memanggil fungsi performSpin di Code.gs
+    }
+    
+    // Load konfigurasi dari sheet
+    function loadSettingsAndDraw() {
+      resultSpan.innerText = "Memuat hadiah...";
+      google.script.run
+        .withSuccessHandler(function(settings) {
+          if(!settings || settings.length === 0) {
+            resultSpan.innerText = "⚠️ Tidak ada hadiah. Isi sheet SpinSettings (A: Hadiah, B: Bobot)";
+            prizes = [];
+            drawWheel();
+            spinBtn.disabled = false;
+            return;
+          }
+          // hitung total bobot
+          totalWeight = settings.reduce((sum, p) => sum + p.weight, 0);
+          if(totalWeight === 0) {
+            resultSpan.innerText = "⚠️ Total bobot harus > 0";
+            prizes = [];
+            drawWheel();
+            spinBtn.disabled = false;
+            return;
+          }
+          // buat segmen
+          let segs = [];
+          let cur = 0;
+          for(let i=0; i<settings.length; i++) {
+            let angleSize = (settings[i].weight / totalWeight) * 2 * Math.PI;
+            segs.push({
+              name: settings[i].name,
+              weight: settings[i].weight,
+              startAngle: cur,
+              endAngle: cur + angleSize,
+              color: colorPalette[i % colorPalette.length]
+            });
+            cur += angleSize;
+          }
+          prizes = segs;
+          // reset rotasi agar posisi awal rapi
+          currentRotation = 0;
+          drawWheel();
+          resultSpan.innerHTML = "🎉 Siap spin!";
+          spinBtn.disabled = false;
+        })
+        .withFailureHandler(function(err) {
+          console.error(err);
+          resultSpan.innerText = "Gagal memuat konfigurasi. Cek sheet & izinkan script.";
+          spinBtn.disabled = false;
+        })
+        .getSettingsFromSheet(); // memanggil fungsi server
+    }
+    
+    // init
+    function init() {
+      resizeCanvas();
+      spinBtn.addEventListener('click', spinWheel);
+      loadSettingsAndDraw();
+    }
+    
+    init();
+  })();
+</script>
+</body>
+</html>
