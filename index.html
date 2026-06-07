@@ -1,75 +1,255 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Spin Undian - Kuota Per User</title>
   <style>
-    /* Sama seperti style sebelumnya, bisa Anda copy utuh */
-    * { box-sizing: border-box; user-select: none; }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
     body {
       background: linear-gradient(145deg, #1e2a3a 0%, #0f1724 100%);
       min-height: 100vh;
-      font-family: 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
       margin: 0;
       padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
+
     .container {
       max-width: 700px;
       width: 100%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+      border-radius: 56px;
+      padding: 20px 20px 30px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      text-align: center;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    h1 {
+      color: #FFD966;
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      text-shadow: 0 2px 5px #00000040;
+      letter-spacing: 1px;
+    }
+
+    .sub {
+      color: #cfcfcf;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 18px;
+      margin: 12px 0;
+      border-radius: 60px;
+      border: none;
+      font-size: 1rem;
+      text-align: center;
+      background: #2c3e33dd;
+      color: white;
+      font-weight: bold;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      background: #1e2a2f;
+      box-shadow: 0 0 0 3px #f39c12;
+    }
+
+    button {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      border: none;
+      font-weight: bold;
+      padding: 12px 24px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin: 8px;
+      color: white;
+      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      transform: none;
+      cursor: not-allowed;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 15px auto;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50%;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 6px #f9e0a0;
+      transition: box-shadow 0.2s;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 22px solid transparent;
+      border-right: 22px solid transparent;
+      border-top: 52px solid #ffc107;
+      filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.4));
+      z-index: 5;
+    }
+
+    .info-peserta {
+      background: #000000aa;
+      border-radius: 60px;
+      padding: 12px 18px;
+      margin: 10px 0 20px;
+      color: white;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
       backdrop-filter: blur(4px);
-      border-radius: 48px;
-      padding: 20px;
-      box-shadow: 0 25px 40px rgba(0,0,0,0.3);
+    }
+
+    .user-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .logout-btn {
+      background: #c0392b;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      margin: 0;
+      box-shadow: none;
+    }
+
+    #result {
+      background: #1e1e2fcc;
+      border-radius: 60px;
+      padding: 12px;
+      margin: 15px 0 5px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ffe484;
+      transition: 0.2s;
+    }
+
+    .history {
+      background: #0f1724cc;
+      border-radius: 32px;
+      padding: 12px 18px;
+      margin-top: 20px;
+      text-align: left;
+      max-height: 170px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+    }
+
+    .history h3 {
+      margin: 0 0 8px 0;
+      color: #ffb347;
+      font-size: 1rem;
       text-align: center;
     }
-    /* sisanya sama... (saya singkat agar tidak terlalu panjang) */
+
+    .history ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #ddd;
+    }
+
+    .history li {
+      margin: 6px 0;
+      border-bottom: 1px dashed #3a4a5f;
+      padding-bottom: 4px;
+    }
+
+    .footer {
+      font-size: 0.7rem;
+      margin-top: 18px;
+      color: #aabbcc;
+    }
+
+    #loginMsg {
+      margin-top: 12px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+
 <div class="container">
+  <!-- SECTION LOGIN -->
   <div id="loginSection">
-    <h1>🎡 Spin Undian 🎁</h1>
-    <p>Masukkan username yang sudah didaftarkan oleh admin</p>
-    <input type="text" id="loginUsername" placeholder="Username" autocomplete="off">
-    <button id="loginBtn">🔐 Login</button>
-    <div id="loginMsg" style="color: #ffaa66;"></div>
+    <h1>🎡 SPIN UNDIAN 🎁</h1>
+    <div class="sub">✨ Setiap hari dapat kesempatan ✨</div>
+    <input type="text" id="loginUsername" placeholder="Masukkan username terdaftar" autocomplete="off">
+    <button id="loginBtn">🔐 LOGIN & MULAI</button>
+    <div id="loginMsg"></div>
   </div>
 
-  <div id="wheelSection" style="display:none;">
+  <!-- SECTION RODA (awal tersembunyi) -->
+  <div id="wheelSection" style="display: none;">
     <div class="info-peserta">
-      <span>👤 <strong id="userUsername"></strong></span>
-      <button id="logoutBtn" class="logout-btn">🚪 Logout</button>
+      <div class="user-area">
+        <span>👤 <strong id="userUsername"></strong></span>
+        <button id="logoutBtn" class="logout-btn">🚪 Keluar</button>
+      </div>
       <div>🎲 Sisa spin hari ini: <strong id="remainingSpin">0</strong> / <span id="maxSpinPerDay"></span></div>
     </div>
+
     <div class="wheel-container">
       <canvas id="wheelCanvas" width="600" height="600"></canvas>
       <div class="pointer"></div>
     </div>
+
     <button id="spinBtn" disabled>✨ PUTAR RODA ✨</button>
-    <div id="result"></div>
+    <div id="result">✨ Login untuk mulai bermain ✨</div>
+
     <div class="history">
       <h3>📜 Riwayat spin Anda</h3>
-      <ul id="historyList"><li>Login untuk mulai</li></ul>
+      <ul id="historyList"><li>Belum ada aktivitas</li></ul>
     </div>
-    <div class="footer">Hasil ditentukan berdasarkan probabilitas yang diatur admin.</div>
+    <div class="footer">Setiap putaran mengurangi kuota harian. Hadiah berdasarkan probabilitas yang ditentukan admin.</div>
   </div>
 </div>
 
 <script>
-  // ================== KONFIGURASI ==================
-  // Ganti dengan URL Web App dari Google Apps Script
-  const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwoRBhiASRaK5QcUYECvACazWFYBioZUwZqym7ssX_vpgBwj08cZ-DPBdrme7Z7jPMBoA/exec"; // PASTE URL ANDA
-  
-  // Data hadiah
-  let HADIAH_DISPLAY = [];
+  // ============================================================
+  // 1. KONFIGURASI: GANTI URL INI DENGAN WEB APP ANDA!
+  // ============================================================
+  const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyL_WiIBw4l5UITru0N0wSu6gFYb9Vn9LcR6EezFe_oxws2qQl-jbkaltyKOExhbjM/exec";  // <-- GANTI DENGAN URL ASLI
+
+  // ========== GLOBAL VARIABLES ==========
+  let HADIAH_DISPLAY = [];       // [{nama, warna}, ...]
   let SEGMENTS = 0;
   let ANGLE_PER_SEG = 0;
-  
   let currentRotation = 0;
   let spinning = false;
   let spinDuration = 2000;
@@ -80,6 +260,7 @@
   let localHistory = [];
   let currentUsername = "";
 
+  // DOM elements
   const canvas = document.getElementById('wheelCanvas');
   const ctx = canvas.getContext('2d');
   const loginSection = document.getElementById('loginSection');
@@ -91,81 +272,89 @@
   const userUsernameSpan = document.getElementById('userUsername');
   const historyList = document.getElementById('historyList');
 
-  // Helper untuk panggil backend
+  // ========== FUNGSI PANGGIL BACKEND VIA FETCH ==========
   async function callBackend(action, data = {}) {
     const payload = { action, ...data };
-    const response = await fetch(BACKEND_URL, {
-      method: 'POST',
-      mode: 'cors',
-      cache: 'no-cache',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    return await response.json();
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-cache',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      console.error(`Backend error (${action}):`, err);
+      return { success: false, message: `Gagal terhubung ke server: ${err.message}` };
+    }
   }
 
-  // Gambar roda (sama seperti sebelumnya)
+  // ========== GAMBAR RODA ==========
   function drawWheel(rotationRad) {
-    if (!HADIAH_DISPLAY.length) return;
+    if (!HADIAH_DISPLAY.length || SEGMENTS === 0) return;
     const w = canvas.width, h = canvas.height;
-    const centerX = w/2, centerY = h/2;
-    const radius = w/2 * 0.92;
+    const centerX = w / 2, centerY = h / 2;
+    const radius = (w / 2) * 0.92;
     ctx.clearRect(0, 0, w, h);
     for (let i = 0; i < SEGMENTS; i++) {
       const start = i * ANGLE_PER_SEG + rotationRad;
-      const end = (i+1) * ANGLE_PER_SEG + rotationRad;
+      const end = (i + 1) * ANGLE_PER_SEG + rotationRad;
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, start, end);
       ctx.closePath();
-      ctx.fillStyle = HADIAH_DISPLAY[i].warna;
+      ctx.fillStyle = HADIAH_DISPLAY[i].warna || '#AAAAAA';
       ctx.fill();
       ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
       ctx.save();
       ctx.translate(centerX, centerY);
-      ctx.rotate(start + ANGLE_PER_SEG/2);
+      ctx.rotate(start + ANGLE_PER_SEG / 2);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = "bold 14px 'Segoe UI'";
+      ctx.font = "bold 13px 'Segoe UI'";
       ctx.fillStyle = "#fff";
       ctx.shadowBlur = 3;
       let label = HADIAH_DISPLAY[i].nama;
-      if (label.length > 12) label = label.substring(0,10)+'..';
+      if (label.length > 14) label = label.substring(0, 12) + '..';
       ctx.fillText(label, radius * 0.68, 8);
       ctx.restore();
     }
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.18, 0, 2*Math.PI);
-    ctx.fillStyle = "#ffcc33";
+    ctx.arc(centerX, centerY, radius * 0.16, 0, 2 * Math.PI);
+    ctx.fillStyle = "#FFD966";
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
-  // Animasi spin (sama)
+  // ========== ANIMASI SPIN (pointer menghadap ke bawah, sudut PI/2) ==========
   function spinToSegment(targetSegmentIndex) {
     return new Promise((resolve) => {
-      if (spinning) return;
+      if (spinning) return resolve();
       spinning = true;
       spinBtn.disabled = true;
-      resultDiv.innerHTML = "🌀 Memutar... 🌀";
-      
-      const pointerAngle = Math.PI / 2; // pointer ke bawah
+      resultDiv.innerHTML = "🌀 Memutar roda ... 🌀";
+
+      const pointerAngle = Math.PI / 2;     // karena pointer CSS mengarah ke bawah
       const midOfSegment = (targetSegmentIndex + 0.5) * ANGLE_PER_SEG;
       let targetRot = pointerAngle - midOfSegment;
-      targetRot = ((targetRot % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
-      
-      const extraFullRot = Math.floor(Math.random() * 8) + 6;
+      targetRot = ((targetRot % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+      const extraFullRot = Math.floor(Math.random() * 8) + 6; // 6-13 putaran penuh
       const targetDelta = (extraFullRot * 2 * Math.PI) + targetRot;
       const startRot = currentRotation;
       const startTime = performance.now();
-      
+
       function animate(now) {
         const elapsed = now - startTime;
         let t = Math.min(1, elapsed / spinDuration);
-        const easeOut = 1 - Math.pow(1-t, 3);
+        const easeOut = 1 - Math.pow(1 - t, 3);
         const newRot = startRot + targetDelta * easeOut;
-        currentRotation = newRot % (2*Math.PI);
+        currentRotation = newRot % (2 * Math.PI);
         drawWheel(currentRotation);
         if (t < 1) {
           requestAnimationFrame(animate);
@@ -182,158 +371,156 @@
     });
   }
 
-  // Login
+  // ========== LOGIN ==========
   async function login() {
     const username = document.getElementById('loginUsername').value.trim();
     if (!username) {
-      document.getElementById('loginMsg').innerText = 'Masukkan username!';
+      document.getElementById('loginMsg').innerText = '⚠️ Username tidak boleh kosong!';
       return;
     }
     const loginBtn = document.getElementById('loginBtn');
     loginBtn.disabled = true;
-    document.getElementById('loginMsg').innerText = 'Memproses...';
+    document.getElementById('loginMsg').innerText = '⏳ Memeriksa data...';
     
-    try {
-      const resp = await callBackend("login", { username });
-      if (resp.success) {
-        currentToken = resp.token;
-        localStorage.setItem('spinToken', currentToken);
-        currentRemainingSpin = resp.remainingSpin;
-        currentMaxSpin = resp.maxSpinPerDay;
-        currentUsername = resp.username;
-        userUsernameSpan.innerText = currentUsername;
-        remainingSpan.innerText = currentRemainingSpin;
-        maxSpinSpan.innerText = currentMaxSpin;
-        spinBtn.disabled = (currentRemainingSpin <= 0);
-        resultDiv.innerHTML = currentRemainingSpin > 0 ? `Silakan putar roda (sisa ${currentRemainingSpin} spin)!` : "Anda sudah mencapai batas spin hari ini.";
-        loginSection.style.display = 'none';
-        wheelSection.style.display = 'block';
-        localHistory = [];
-        historyList.innerHTML = '<li>Memuat riwayat...</li>';
-        
-        // Ambil daftar hadiah
-        const hadiahResp = await callBackend("getHadiahList");
-        if (hadiahResp && Array.isArray(hadiahResp)) {
-          HADIAH_DISPLAY = hadiahResp;
-          SEGMENTS = HADIAH_DISPLAY.length;
-          ANGLE_PER_SEG = (Math.PI * 2) / SEGMENTS;
-          drawWheel(currentRotation);
-        }
-        
-        // Ambil riwayat user
-        const historyResp = await callBackend("getUserHistory", { username: currentUsername, limit: 10 });
-        if (historyResp && Array.isArray(historyResp)) {
-          localHistory = historyResp.map(h => `${new Date(h.timestamp).toLocaleTimeString()} → ${h.hadiah}`);
-          historyList.innerHTML = localHistory.map(item => `<li>${item}</li>`).join('');
-          if (localHistory.length === 0) historyList.innerHTML = '<li>Belum ada spin.</li>';
-        } else {
-          historyList.innerHTML = '<li>Belum ada riwayat.</li>';
-        }
+    const resp = await callBackend('login', { username });
+    if (resp.success) {
+      currentToken = resp.token;
+      localStorage.setItem('spinToken', currentToken);
+      currentRemainingSpin = resp.remainingSpin;
+      currentMaxSpin = resp.maxSpinPerDay;
+      currentUsername = resp.username;
+      userUsernameSpan.innerText = currentUsername;
+      remainingSpan.innerText = currentRemainingSpin;
+      maxSpinSpan.innerText = currentMaxSpin;
+      spinBtn.disabled = (currentRemainingSpin <= 0);
+      resultDiv.innerHTML = currentRemainingSpin > 0 ? `✅ Selamat datang! Sisa spin: ${currentRemainingSpin}` : "❌ Kuota spin hari ini habis.";
+      
+      loginSection.style.display = 'none';
+      wheelSection.style.display = 'block';
+      
+      // Ambil daftar hadiah untuk roda
+      const hadiahResp = await callBackend('getHadiahList');
+      if (hadiahResp && Array.isArray(hadiahResp) && hadiahResp.length) {
+        HADIAH_DISPLAY = hadiahResp;
+        SEGMENTS = HADIAH_DISPLAY.length;
+        ANGLE_PER_SEG = (Math.PI * 2) / SEGMENTS;
+        drawWheel(currentRotation);
       } else {
-        document.getElementById('loginMsg').innerText = resp.message;
+        resultDiv.innerHTML = "⚠️ Data hadiah kosong, hubungi admin.";
       }
-    } catch (err) {
-      document.getElementById('loginMsg').innerText = 'Error: ' + err.message;
-    } finally {
-      loginBtn.disabled = false;
+      
+      // Ambil riwayat spin user
+      const historyResp = await callBackend('getUserHistory', { username: currentUsername, limit: 8 });
+      if (historyResp && Array.isArray(historyResp)) {
+        localHistory = historyResp.map(h => {
+          let time = h.timestamp ? new Date(h.timestamp).toLocaleTimeString() : 'baru';
+          return `${time} → ${h.hadiah}`;
+        });
+        if (localHistory.length === 0) historyList.innerHTML = '<li>Belum ada putaran sebelumnya.</li>';
+        else historyList.innerHTML = localHistory.map(item => `<li>${item}</li>`).join('');
+      } else {
+        historyList.innerHTML = '<li>Riwayat tidak tersedia</li>';
+      }
+    } else {
+      document.getElementById('loginMsg').innerHTML = `❌ ${resp.message}`;
     }
+    loginBtn.disabled = false;
   }
 
+  // ========== LOGOUT ==========
   function logout() {
     localStorage.removeItem('spinToken');
     currentToken = null;
     loginSection.style.display = 'block';
     wheelSection.style.display = 'none';
     document.getElementById('loginUsername').value = '';
-    document.getElementById('loginMsg').innerText = '';
+    document.getElementById('loginMsg').innerHTML = '';
     currentRotation = 0;
     if (HADIAH_DISPLAY.length) drawWheel(0);
+    spinning = false;
   }
 
-  // Proses spin
+  // ========== PROSES SPIN ==========
   async function doSpin() {
     if (spinning) return;
     if (currentRemainingSpin <= 0) {
-      resultDiv.innerHTML = `⚠️ Anda sudah mencapai batas spin hari ini (${currentMaxSpin} kali). Coba lagi besok!`;
+      resultDiv.innerHTML = `⛔ Batas spin hari ini (${currentMaxSpin}) sudah tercapai. Besok lagi ya!`;
       return;
     }
     spinBtn.disabled = true;
     resultDiv.innerHTML = "🎲 Menentukan hadiah... 🎲";
     
-    try {
-      const resp = await callBackend("spin", { token: currentToken });
-      if (resp.success) {
-        const selectedHadiah = resp.hadiah;
-        const idx = HADIAH_DISPLAY.findIndex(h => h.nama === selectedHadiah);
-        if (idx !== -1) {
-          await spinToSegment(idx);
-          resultDiv.innerHTML = `🎉 ${resp.message} 🎉`;
-          currentRemainingSpin = resp.remainingSpin;
-          remainingSpan.innerText = currentRemainingSpin;
-          spinBtn.disabled = (currentRemainingSpin <= 0);
-          // Update riwayat lokal
-          const timeStr = new Date().toLocaleTimeString();
-          localHistory.unshift(`${timeStr} → ${selectedHadiah}`);
-          if (localHistory.length > 10) localHistory.pop();
-          historyList.innerHTML = localHistory.map(item => `<li>${item}</li>`).join('');
-          if (currentRemainingSpin === 0) {
-            resultDiv.innerHTML += `<br>⚠️ Sisa spin habis. Kembali besok!`;
-          }
-        } else {
-          resultDiv.innerHTML = "Error: hadiah tidak ditemukan di roda";
+    const resp = await callBackend('spin', { token: currentToken });
+    if (resp.success) {
+      const selectedHadiah = resp.hadiah;
+      const idx = HADIAH_DISPLAY.findIndex(h => h.nama === selectedHadiah);
+      if (idx !== -1) {
+        await spinToSegment(idx);
+        resultDiv.innerHTML = `🎉🎉 ${resp.message} 🎉🎉`;
+        currentRemainingSpin = resp.remainingSpin;
+        remainingSpan.innerText = currentRemainingSpin;
+        spinBtn.disabled = (currentRemainingSpin <= 0);
+        // update riwayat lokal
+        const timeNow = new Date().toLocaleTimeString();
+        localHistory.unshift(`${timeNow} → ${selectedHadiah}`);
+        if (localHistory.length > 8) localHistory.pop();
+        historyList.innerHTML = localHistory.map(item => `<li>${item}</li>`).join('');
+        if (currentRemainingSpin === 0) {
+          resultDiv.innerHTML += `<br>⚠️ Sisa spin habis. Kembali besok!`;
         }
       } else {
-        resultDiv.innerHTML = `❌ ${resp.message}`;
+        resultDiv.innerHTML = "⚠️ Hadiah tidak dikenali di roda, refresh halaman.";
+        spinBtn.disabled = false;
       }
-    } catch (err) {
-      resultDiv.innerHTML = "Error: " + err.message;
-    } finally {
-      if (!spinning) spinBtn.disabled = (currentRemainingSpin <= 0);
-      else spinBtn.disabled = true;
+    } else {
+      resultDiv.innerHTML = `❌ Gagal: ${resp.message}`;
+      spinBtn.disabled = false;
+      if (resp.message.includes('kadaluarsa') || resp.message.includes('token')) {
+        logout();
+      }
     }
   }
 
+  // ========== CEK TOKEN OTOMATIS (refresh / buka ulang) ==========
   async function cekTokenOtomatis() {
     const token = localStorage.getItem('spinToken');
     if (!token) return;
-    try {
-      const resp = await callBackend("cekSesi", { token });
-      if (resp.valid) {
-        currentToken = token;
-        currentRemainingSpin = resp.remainingSpin;
-        currentMaxSpin = resp.maxSpinPerDay;
-        currentUsername = resp.username;
-        userUsernameSpan.innerText = currentUsername;
-        remainingSpan.innerText = currentRemainingSpin;
-        maxSpinSpan.innerText = currentMaxSpin;
-        spinBtn.disabled = (currentRemainingSpin <= 0);
-        resultDiv.innerHTML = currentRemainingSpin > 0 ? `Silakan putar roda (sisa ${currentRemainingSpin} spin)!` : "Anda sudah mencapai batas spin hari ini.";
-        loginSection.style.display = 'none';
-        wheelSection.style.display = 'block';
-        
-        const hadiahResp = await callBackend("getHadiahList");
-        if (hadiahResp && Array.isArray(hadiahResp)) {
-          HADIAH_DISPLAY = hadiahResp;
-          SEGMENTS = HADIAH_DISPLAY.length;
-          ANGLE_PER_SEG = (Math.PI * 2) / SEGMENTS;
-          drawWheel(currentRotation);
-        }
-        
-        const historyResp = await callBackend("getUserHistory", { username: currentUsername, limit: 10 });
-        if (historyResp && Array.isArray(historyResp)) {
-          localHistory = historyResp.map(h => `${new Date(h.timestamp).toLocaleTimeString()} → ${h.hadiah}`);
-          historyList.innerHTML = localHistory.map(item => `<li>${item}</li>`).join('');
-          if (localHistory.length === 0) historyList.innerHTML = '<li>Belum ada spin.</li>';
-        }
-      } else {
-        localStorage.removeItem('spinToken');
+    const resp = await callBackend('cekSesi', { token });
+    if (resp.valid) {
+      currentToken = token;
+      currentRemainingSpin = resp.remainingSpin;
+      currentMaxSpin = resp.maxSpinPerDay;
+      currentUsername = resp.username;
+      userUsernameSpan.innerText = currentUsername;
+      remainingSpan.innerText = currentRemainingSpin;
+      maxSpinSpan.innerText = currentMaxSpin;
+      spinBtn.disabled = (currentRemainingSpin <= 0);
+      resultDiv.innerHTML = currentRemainingSpin > 0 ? `✨ Sisa spin: ${currentRemainingSpin}` : "😢 Kuota habis hari ini.";
+      loginSection.style.display = 'none';
+      wheelSection.style.display = 'block';
+      
+      const hadiahResp = await callBackend('getHadiahList');
+      if (hadiahResp && Array.isArray(hadiahResp)) {
+        HADIAH_DISPLAY = hadiahResp;
+        SEGMENTS = HADIAH_DISPLAY.length;
+        ANGLE_PER_SEG = (Math.PI * 2) / SEGMENTS;
+        drawWheel(currentRotation);
       }
-    } catch(e) {
-      console.error(e);
+      const historyResp = await callBackend('getUserHistory', { username: currentUsername, limit: 8 });
+      if (historyResp && Array.isArray(historyResp)) {
+        localHistory = historyResp.map(h => {
+          let time = h.timestamp ? new Date(h.timestamp).toLocaleTimeString() : '';
+          return `${time} → ${h.hadiah}`;
+        });
+        historyList.innerHTML = localHistory.length ? localHistory.map(item => `<li>${item}</li>`).join('') : '<li>Belum ada riwayat spin</li>';
+      }
+    } else {
+      localStorage.removeItem('spinToken');
     }
   }
 
-  window.addEventListener('load', function() {
+  // ========== INIT EVENT LISTENER ==========
+  window.addEventListener('load', () => {
     document.getElementById('loginBtn').addEventListener('click', login);
     document.getElementById('logoutBtn').addEventListener('click', logout);
     spinBtn.addEventListener('click', doSpin);
